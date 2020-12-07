@@ -390,8 +390,11 @@ function New-TemporaryDirectory {
 
 function New-ZipFile {
     Write-Output "[+] Creating Zip file for Download"
-    $parent = [System.IO.Path]::GetTempPath().Trim()
-    $name = [System.IO.Path]::GetRandomFileName().Trim()
+    do {
+        $parent = [System.IO.Path]::GetTempPath().Trim()
+        $name = [System.IO.Path]::GetRandomFileName().Trim()
+        $path = "$($parent)$($name).zip"
+    } while {[System.IO.File]::Exists($path)}
     $Global:zipPath = "$($parent)$($name).zip"
     Compress-Archive -Path $Global:irPath -DestinationPath $Global:zipPath -ErrorAction SilentlyContinue
     Write-Output "[ done ]"
