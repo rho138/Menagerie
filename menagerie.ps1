@@ -1,9 +1,6 @@
 Param (
     [Parameter(Mandatory = $false)]
-    [string] $module,
-
-    [Parameter(Mandatory = $false)]
-    [string] $folder
+    [string] $module
 )
 
 [string] $date = Get-Date -Format yyyyMMddHHmmss
@@ -14,7 +11,6 @@ function usage {
     Usage:
       -module all           : run all modules
       -module <name>        : run specific module
-      -folder <path>        : output folder [Default: C:\Windows\Temp\IR]
       -module help          : display usage
 
     Modules:
@@ -381,6 +377,27 @@ function Get-KrbSessions {
     Write-Output "To view further details run: klist -li [logon_id]"
 }
 
+function New-TemporaryDirectory {
+    Write-Output "[+] Creating Temp Directory for script output"
+    $parent = [System.IO.Path]::GetTempPath()
+    do {
+        $name = [System.IO.Path]::GetRandomFileName()
+        $item = New-Item -Path $parent -Name $name -ItemType "directory" -ErrorAction SilentlyContinue
+    } while (-not $item)
+    $Global:irPath = $Item.FullName
+    Write-Output "[ done ] Temp Directory: $Global:irPath"
+}
+
+function New-ZipFile {
+    Write-Output "[+] Creating Zip file for Download"
+    $parent = [System.IO.Path]::GetTempPath().Trim()
+    $name = [System.IO.Path]::GetRandomFileName().Trim()
+    $Global:zipPath = "$($parent)$($name).zip"
+    Compress-Archive -Path $Global:irPath -DestinationPath $Global:zipPath -ErrorAction SilentlyContinue
+    Write-Output "[ done ]"
+}
+
+
 function Invoke-AllIRModules {
     Write-Output "[+] Running all IR modules ..."
     Get-AutoRuns
@@ -402,15 +419,8 @@ function Invoke-AllIRModules {
 }
 
 if ($module) {
-    if ($folder) {
-        if (-Not (Test-Path $folder)) {
-            New-Item -Path $folder -Type Directory -Force | Out-Null
-        }
-
-        $Global:irPath = $folder
-    }
-    else {
-        $Global:irPath = "C:\Windows\Temp\IR"
+    if (-Not ($module -contains 'help' -Or $module.length -eq 0)){
+        New-TemporaryDirectory
     }
 
     switch ($module.ToLower()) {
@@ -433,6 +443,15 @@ if ($module) {
         help { usage }
         default { usage }
     }
+    if (-Not ($module -contains 'help' -Or $module.length -eq 0)){
+        New-ZipFile
+        Write-Output "[+] Deleting Temporary Directory: $Global:irPath"
+        Remove-Item -Recurse -Force $Global:irPath
+        Write-Output "[ done ]"
+        Write-Output "[ info ] To download the archive run the following command: get $Global:zipPath"
+        Write-Output "[ info ] After Download please delete the zip file: rm $Global:zipPath"
+    }
+
 }
 else {
     usage
