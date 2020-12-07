@@ -2,13 +2,12 @@
 
 A CrowdStrike Response script for doing simple intial triage and data collection from a system (autorun information, installedsoftware, files and hashes, etc..)
 
-Create a new script via Configuration -> Response Scripts & Files and name it Menagerie
+Create a new script via Configuration -> Response Scripts & Files and name it Menagerie.
 
 ```
 Usage:
   -module all           : run all modules
   -module <name>        : run specific module
-  -folder <path>        : output folder [Default: C:\Windows\Temp\IR]
   -module help          : display usage
 
 Modules:
@@ -24,13 +23,12 @@ Modules:
   EventLogs             : Gather Event Logs
   RecentFiles           : Get history of recent files
   LNKFiles              : Get LNK files on desktop and recent files list
-  HiddenFilesDirs       : Get hidden files and directories
-  WindowsUpdates        : Get installed windows updates
-  BrowserExtensions     : Get list of extensions for Chrome and Firefox
-  KrbSessions           : Get list of kerberos sessions
 
 Examples:
   runscript -CloudFile='Menagerie' -CommandLine='-module all'
   runscript -CloudFile='Menagerie' -CommandLine='-module Services'"
 ```
 
+-------------
+
+This fork removes the folder option and instead creates a temp dir. After collection has been performed the temp dir is zipped and then the temp directory is deleted. The utility will then post the Crowdstrike RTR Commands to `get` & `rm` the zip file.
